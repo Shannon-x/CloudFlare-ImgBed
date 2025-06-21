@@ -56,8 +56,9 @@ export async function onRequest(context) {  // Contents of context object
         return new Response('Error: Please configure KV database', { status: 500 });
     }
     const imgRecord = await env.img_url.getWithMetadata(fileId);
-    if (!imgRecord) {
-        return new Response('Error: Image Not Found', { status: 404 });
+    if (!imgRecord || !imgRecord.value) {
+        console.log(`File not found in KV: ${fileId}`);
+        return await return404(url);
     }
     // 如果metadata不存在，只可能是之前未设置KV，且存储在Telegraph上的图片
     if (!imgRecord.metadata) {

@@ -78,6 +78,9 @@ async function authentication(context) {
   securityConfig = await fetchSecurityConfig(context.env);
   basicUser = securityConfig.auth.admin.adminUsername
   basicPass = securityConfig.auth.admin.adminPassword
+  
+  // 调试日志
+  console.log(`Auth check - basicUser: ${basicUser ? 'set' : 'not set'}, basicPass: ${basicPass ? 'set' : 'not set'}`);
 
   //check if the env variables Disable_Dashboard are set
   if (typeof context.env.img_url == "undefined" || context.env.img_url == null || context.env.img_url == "") {
@@ -88,14 +91,17 @@ async function authentication(context) {
       return context.next();
   }else{
       if (context.request.headers.has('Authorization')) {
-          // Throws exception when authorization fails.
-          const { user, pass } = basicAuthentication(context.request);                         
+          try {
+              // Throws exception when authorization fails.
+              const { user, pass } = basicAuthentication(context.request);                         
               if (basicUser !== user || basicPass !== pass) {
                   return UnauthorizedException('Invalid credentials.');
               }else{
                   return context.next();
               }
-          
+          } catch (error) {
+              return BadRequestException('Authentication error: ' + error.message);
+          }
       } else {
           return new Response('You need to login.', {
               status: 401,
