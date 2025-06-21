@@ -160,7 +160,7 @@ export async function onRequestPost(context) {  // Contents of context object
         FileType: fileType,
         FileSize: fileSize,
         UploadIP: uploadIp,
-        UploadAddress: ipAddress,
+        UploadAddress: encodeURIComponent(ipAddress), // 对地址进行编码以避免HTTP header中的中文字符问题
         ListType: "None",
         TimeStamp: time,
         Label: "None",
