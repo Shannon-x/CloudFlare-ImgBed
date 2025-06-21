@@ -301,8 +301,23 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnL
     
     const R2DataBase = env.img_r2;
 
-    // 写入R2数据库
-    await R2DataBase.put(fullId, formdata.get('file'));
+    // 创建一个不包含中文字符的metadata副本用于R2存储
+    const safeMetadata = {
+        FileName: metadata.FileName,
+        FileType: metadata.FileType,
+        FileSize: metadata.FileSize,
+        UploadIP: metadata.UploadIP,
+        // 不包含UploadAddress以避免中文字符在HTTP header中的问题
+        ListType: metadata.ListType,
+        TimeStamp: metadata.TimeStamp,
+        Label: metadata.Label,
+        Folder: metadata.Folder
+    };
+
+    // 写入R2数据库，使用安全的metadata
+    await R2DataBase.put(fullId, formdata.get('file'), {
+        customMetadata: safeMetadata
+    });
 
     // 更新metadata
     metadata.Channel = "CloudflareR2";
@@ -356,7 +371,8 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
         credentials: {
             accessKeyId,
             secretAccessKey
-        }
+        },
+        forcePathStyle: s3Channel.pathStyle || false // 添加路径风格支持
     });
 
     // 获取文件
@@ -370,12 +386,26 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
     const s3FileName = fullId;
 
     try {
+        // 创建安全的metadata，避免中文字符
+        const safeS3Metadata = {
+            'filename': metadata.FileName,
+            'filetype': metadata.FileType,
+            'filesize': metadata.FileSize,
+            'uploadip': metadata.UploadIP,
+            // 不包含UploadAddress以避免中文字符问题
+            'listtype': metadata.ListType,
+            'timestamp': metadata.TimeStamp.toString(),
+            'label': metadata.Label,
+            'folder': metadata.Folder
+        };
+
         // S3 上传参数
         const putObjectParams = {
             Bucket: bucketName,
             Key: s3FileName,
             Body: uint8Array, // 直接使用 Blob
-            ContentType: file.type
+            ContentType: file.type,
+            Metadata: safeS3Metadata // 添加安全的metadata
         };
 
         // 执行上传
@@ -393,6 +423,7 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
         metadata.S3Region = region || "auto";
         metadata.S3BucketName = bucketName;
         metadata.S3FileKey = s3FileName;
+        metadata.S3PathStyle = s3Channel.pathStyle || false;
 
         // 图像审查
         if (moderateContentApiKey) {
