@@ -24,16 +24,46 @@ export async function onRequest(context) {
 
     // POST保存设置
     if (request.method === 'POST') {
-        const body = await request.json()
-        const settings = body
-        // 写入 KV
-        await kv.put('manage@sysConfig@page', JSON.stringify(settings))
+        try {
+            // 检查KV绑定
+            if (typeof kv === "undefined" || kv === null) {
+                console.error('KV数据库未绑定或配置错误');
+                return new Response(JSON.stringify({
+                    error: 'KV数据库未绑定，无法保存设置。请检查wrangler.toml配置。'
+                }), {
+                    status: 500,
+                    headers: { 'content-type': 'application/json' }
+                });
+            }
 
-        return new Response(JSON.stringify(settings), {
-            headers: {
-                'content-type': 'application/json',
-            },
-        })
+            const body = await request.json()
+            const settings = body
+
+            console.log('正在保存页面设置到KV:', JSON.stringify(settings, null, 2));
+
+            // 写入 KV
+            await kv.put('manage@sysConfig@page', JSON.stringify(settings))
+            
+            console.log('页面设置保存成功');
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: '页面设置保存成功',
+                data: settings
+            }), {
+                headers: {
+                    'content-type': 'application/json',
+                },
+            })
+        } catch (error) {
+            console.error('保存页面设置时发生错误:', error);
+            return new Response(JSON.stringify({
+                error: `保存设置失败: ${error.message}`
+            }), {
+                status: 500,
+                headers: { 'content-type': 'application/json' }
+            });
+        }
     }
 
 }

@@ -24,17 +24,58 @@ export async function onRequest(context) {
 
     // POST保存设置
     if (request.method === 'POST') {
-        const body = await request.json()
-        const settings = body
+        try {
+            // 检查KV绑定
+            if (typeof kv === "undefined" || kv === null) {
+                console.error('KV数据库未绑定或配置错误');
+                return new Response(JSON.stringify({
+                    error: 'KV数据库未绑定，无法保存设置。请检查wrangler.toml配置。'
+                }), {
+                    status: 500,
+                    headers: { 'content-type': 'application/json' }
+                });
+            }
 
-        // 写入 KV
-        await kv.put('manage@sysConfig@upload', JSON.stringify(settings))
+            const body = await request.json()
+            const settings = body
 
-        return new Response(JSON.stringify(settings), {
-            headers: {
-                'content-type': 'application/json',
-            },
-        })
+            console.log('正在保存上传设置到KV:', JSON.stringify(settings, null, 2));
+
+            // 写入 KV
+            await kv.put('manage@sysConfig@upload', JSON.stringify(settings))
+            
+            console.log('上传设置保存成功');
+
+            // 验证保存结果
+            const savedSettings = await kv.get('manage@sysConfig@upload');
+            if (!savedSettings) {
+                console.error('设置保存失败：无法从KV中读取已保存的设置');
+                return new Response(JSON.stringify({
+                    error: '设置保存失败，请检查KV数据库配置'
+                }), {
+                    status: 500,
+                    headers: { 'content-type': 'application/json' }
+                });
+            }
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: '设置保存成功',
+                data: settings
+            }), {
+                headers: {
+                    'content-type': 'application/json',
+                },
+            })
+        } catch (error) {
+            console.error('保存上传设置时发生错误:', error);
+            return new Response(JSON.stringify({
+                error: `保存设置失败: ${error.message}`
+            }), {
+                status: 500,
+                headers: { 'content-type': 'application/json' }
+            });
+        }
     }
 
 }

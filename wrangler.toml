@@ -1,2 +1,45 @@
 name = "isufe"
-compatibility_date = "2024-07-01" 
+compatibility_date = "2024-07-01"
+
+# KV数据库绑定 - 用于存储图片元数据和系统设置
+[[kv_namespaces]]
+binding = "img_url"
+id = "your_kv_namespace_id"
+preview_id = "your_kv_namespace_id"
+
+# R2对象存储绑定 - 用于存储图片文件（可选）
+[[r2_buckets]]
+binding = "img_r2"
+bucket_name = "your_r2_bucket_name"
+
+# 环境变量配置
+[vars]
+# 管理员认证
+BASIC_USER = "admin"
+BASIC_PASS = "your_admin_password"
+
+# 用户上传认证码（可选）
+AUTH_CODE = "your_auth_code"
+
+# S3存储配置（如果使用S3）
+S3_ACCESS_KEY_ID = "your_s3_access_key"
+S3_SECRET_ACCESS_KEY = "your_s3_secret_key"
+S3_BUCKET_NAME = "your_s3_bucket"
+S3_ENDPOINT = "https://s3.388898.xyz"
+S3_REGION = "us-east-1"
+S3_PATH_STYLE = "true"
+
+# Telegram配置（如果使用Telegram存储）
+TG_BOT_TOKEN = "your_telegram_bot_token"
+TG_CHAT_ID = "your_telegram_chat_id"
+
+# CloudFlare API配置（用于CDN缓存清理）
+CF_ZONE_ID = "your_cloudflare_zone_id"
+CF_EMAIL = "your_cloudflare_email"
+CF_API_KEY = "your_cloudflare_api_key"
+
+# 其他配置
+ALLOWED_DOMAINS = "your-domain.com"
+WhiteList_Mode = "false"
+AllowRandom = "true"
+disable_telemetry = "false" 
